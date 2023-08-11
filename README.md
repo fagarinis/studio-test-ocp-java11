@@ -1,5 +1,4 @@
 # studio-test-ocp-java11
-[Array Methods](https://github.com/fagarinis/studio-test-ocp-java11/Array-methods)
 
 ### Abstract class
 Abstract methods in an abstract class cannot be private 
