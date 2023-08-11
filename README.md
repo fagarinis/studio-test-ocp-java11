@@ -1,4 +1,5 @@
 # studio-test-ocp-java11
+[Array Methods](#array_methods)
 
 ### Abstract class
 Abstract methods in an abstract class cannot be private 
@@ -19,6 +20,7 @@ this annotation should be available via reflection at runtime.
 A marker annotation is one that contains no elements, optional or required. example: @SafeVarargs, @Override, @Documented, and @FunctionalInterface 
 
 
+<a name="array_methods"></a>
 ### Array methods
 
 #### COMPARE
@@ -43,6 +45,40 @@ It throws NullPointerException, if either array is null.
 return true if both of the arrays are null or both contain the same elements in the same order, otherwise return false.
 
 
+### SQL Procedure
+```java
+connection.prepareCall("{call <procedure-name>[(<arg1>,<arg2>, ...)]}");
+```
+
+
+### Compare e comparatori
+
+
+#### Interfaccia Comparable\<T>
+Determina un ordine naturale degli oggetti implementando il metodo:
+
+```java
+int compareTo(T other)
+```
+viene usato automaticamente nelle liste automaticamente ordinate come i SortedSet e
+la sua implementazione specifica la logica della differenza nell'ordine naturale del this rispetto all'other
+
+* this compareTo other è n < 0 -> il this viene prima dell'other di n posizioni
+* this compareTo other è n > 0 -> il this viene dopo dell'other di n posizioni
+* this compareTo other è n == 0 -> il this è uguale all'other nell'ordine
+
+
+
+#### Interfaccia Comparator\<T>
+implementa l'interfaccia che definisce un comparatore da usare eventualmente 
+per passarlo ad altri metodi per ordinare l'oggetto secondo una logica diversa dal compareTo (ma anche uguale)
+```java
+public int compare(T a, T b)
+```
+restituisce l'ordine naturale di a rispetto a b in questo comparatore
+
+
+buona pratica: 0 should always be returned for objects when the .equals() comparisons return true
 
 ### Other info
 
