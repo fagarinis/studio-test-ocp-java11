@@ -1,5 +1,5 @@
 # studio-test-ocp-java11
-[Array Methods](#array_methods)
+[Array Methods](https://github.com/fagarinis/studio-test-ocp-java11/Array-methods)
 
 ### Abstract class
 Abstract methods in an abstract class cannot be private 
@@ -20,7 +20,7 @@ this annotation should be available via reflection at runtime.
 A marker annotation is one that contains no elements, optional or required. example: @SafeVarargs, @Override, @Documented, and @FunctionalInterface 
 
 
-<a name="array_methods"></a>
+
 ### Array methods
 
 #### COMPARE
