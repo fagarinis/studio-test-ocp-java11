@@ -139,6 +139,7 @@ According to overriding rules, if super class / interface method declares to thr
 6. May declare to throw any RuntimeException or Error: RuntimeException, NullPointerException and Error are valid options.
 
 
+le eccezioni lanciate nel blocco ```finally``` vengono sempre propagate in cima allo stack rispetto a tutto il resto.
 
 ## ExecutorService
 ```java
@@ -275,6 +276,11 @@ https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html
 ```List.of(...)``` method returns unmodifiable list
 
 ## Modules
+* Unnamed modules can read only from the classpath.
+* Automatic modules can read from either the classpath or the module path.
+* Named modules can read only from the module path.
+
+
 Syntax of qualified exports is:
 ```java
 exports <package_name> to <comma_separated_list_of_modules>;
@@ -284,6 +290,15 @@ esporta il package solo nel modulo dichiarato (utile ad es. in un modulo aggrega
 
 ```requires <nome_modulo>``` -> rende disponibile i package esportati dal modulo <nome_modulo> al modulo in cui si dichiara
 ```requires transitive <nome_modulo>``` -> come il requires ma i moduli che richiedono il modulo in cui viene dichiarato automaticamente avranno disponibile anche i package di <nome_modulo>
+
+
+## Automatic Modules
+We can turn a regular JAR into a modular JAR just by placing it on the module path (that's an automatic module)
+
+An automatic module exports all the packages it contains
+
+The unnamed module can read all packages in automatic modules
+
 
 
 ### Aggregator Modules
@@ -333,6 +348,64 @@ Options of the ```jar``` command:
 
 ```java --list-modules```  stampa la lista dei system moduls
 ```java --list-module-resolution``` stampa l'output del module resolution
+
+### JDEPS
+```jdeps``` è un comando che analizza le dipendenze tra i moduli di un file jar
+esempio
+
+```
+jdeps demo/jfc/Notepad/Notepad.jar
+ 
+demo/jfc/Notepad/Notepad.jar -> /usr/java/jre/lib/rt.jar
+   <unnamed> (Notepad.jar)
+      -> java.awt                                           
+      -> java.awt.event                                     
+      -> java.beans                                         
+      -> java.io                                            
+      -> java.lang                                          
+      -> java.net                                           
+      -> java.util                                          
+      -> java.util.logging                                  
+      -> javax.swing                                        
+      -> javax.swing.border                                 
+      -> javax.swing.event                                  
+      -> javax.swing.text                                   
+      -> javax.swing.tree                                   
+      -> javax.swing.undo  
+```
+
+
+
+opzioni di jdeps:
+```--module-path```
+ listing dependency information.
+
+```-apionly ```
+restrict the analisys only to public and protected members in public classes
+
+```--generate-module-info dir```
+Generates module-info.java under the specified directory. The specified JAR files will be analyzed. 
+This option cannot be used with ```--dot-output``` or ```--class-path``` options. Use the ```--generate-open-module``` option for open modules.
+
+```--generate-open-module dir```
+Generates module-info.java for the specified JAR files under the specified directory as open modules. 
+This option cannot be used with the ```--dot-output``` or ```--class-path``` options.
+
+```--check module-name [, module-name...]```
+Analyzes the dependencies of the specified modules. It prints the module descriptor, 
+the resulting module dependencies after analysis, and the graph after transition reduction. It also identifies any unused qualified exports.
+
+```--list-deps```
+Lists the module dependencies and also the package names of JDK internal APIs (if referenced).
+
+```--list—reduced-deps```
+Same as ```--list-deps``` without listing the implied reads edges from the module graph. 
+If module M1 reads M2, and M2 requires transitive on M3, then M1 reading M3 is implied and is not shown in the graph.
+
+```--print-module-deps```
+Same as ```--list-reduced-deps``` with printing a comma-separated list of module dependencies. 
+The output can be used by ```jlink --add-modules``` to create a custom image that contains those modules and their transitive dependencies.
+
 
 
 ## Optionals
@@ -399,16 +472,102 @@ at ```/*INSERT*/``` According to overriding rules, if super class / interface me
   
 
 ## Stream
+### ParallelStream
 ```java
 int i = list.parallelStream().reduce(1, Integer::sum, (i1, i2) -> i1 * i2);
 ```
 
 esegue il ```reduce``` su tutti gli elementi della lista in parallelo con ```Integer::sum``` e poi combina tutti i risultati con ```i1*i2```
+### Sequential Stream
+In a sequential stream, each element is processed the whole way from the first to the final operation
 
-## Primitive Casting
+## Primitive Types
+```java
+int * Integer = int // l'integer viene unboxato
+```
+
+### Casting
 ```java
 int value = (int) 3.14f; // 3 
 int score = (int) 3.99f; // 3
+```
+
+## Sets
+```java
+Set.copyOf(set1); // restituisce un set non modificabile
+```
+
+```java
+TreeSet<>(Comparator c)
+```
+i suoi oggetti devono essere comparabili (implementare Comparable) oppure deve essere costruito con un Comparator
+se gli oggetti sono Comparable, allora il metodo di ordinamento degli oggetti ha priorità sul Comparator passato al TreeSet
+
+## Strings
+### String pool
+literal/final Strings (or primitive variables) computed by concatenation at compile time are referred by String Pool. 
+This means the result of constant expression is calculated at compile time and later referred by String Pool.
+
+### Split
+```java
+public String[] split​(String regex, int limit) {…} // returns the String[] after splitting this string around matches of the given regex.
+```
+
+## Var
+```java
+var x = 10 // infers to int
+```
+
+Local variable Type inference is applicable only for local variables and not for instance or class variables
+
+
+
+```var``` is not allowed as an element type of an array, hence ```var [] arr1 = new String[2];``` won't compile.
+
+```var``` can't be assigned to lambda expression such as ```() -> System.out.println("Hello")```
+
+```var list = new ArrayList<>()``` oppure ```ArrayList()``` infers to ```ArrayList<Object>()```
+
+## Wrapper Classes
+Two instances of following wrapper objects, created through auto-boxing will always be same, if their primitive values are same:
+
+```Boolean```,
+```Byte```,
+Character from ```\u0000``` to ```\u007f``` (7f equals to 127),
+```Short``` and ```Integer``` from -128 to 127. 
+
+***EXAMPLE
+```java
+List<Integer> list = new ArrayList<Integer>();
+ 
+        list.add(27);
+        list.add(27);
+ 
+        list.add(227);
+        list.add(227);
+ 
+        System.out.println(list.get(0) == list.get(1)); // true
+        System.out.println(list.get(2) == list.get(3)); // false
+```
+
+## Serializzazione
+When an ```Externalizable``` object is reconstructed, an instance is created using the public no-arg constructor, 
+then the ```readExternal``` method called. ```Serializable``` objects are restored by reading them from an ```ObjectInputStream```
+
+### File Writing
+```java
+public static Path writeString​(Path path, CharSequence csq, OpenOption... options) throws IOException
+```
+scrive tutto il contenuto di csq nel file che sta in path, le opzioni di scrittura in options(Attenzione, ```APPEND``` e ```TRUNCATE_EXISTING```
+lanciano un eccezione perché confliggono https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/StandardOpenOption.html ) 
+
+### SerialPersistenFields
+
+The serialPersistentFields array lists the fields available to ```writeObject()``` and ```readObject()``` during serialization
+
+example:
+```java
+private static final ObjectStreamField[] serialPersistentFields  = { new ObjectStreamField("name", String.class)};
 ```
 
 ## Other info
