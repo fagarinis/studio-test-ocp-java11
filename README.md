@@ -272,13 +272,150 @@ https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html
 
 ```Arrays.asList(...)``` method returns a fixed-size list
 
-```List.of(...)``` method returns unmodifiable list,
+```List.of(...)``` method returns unmodifiable list
+
+## Modules
+Syntax of qualified exports is:
+```java
+exports <package_name> to <comma_separated_list_of_modules>;
+```
+esporta il package solo nel modulo dichiarato (utile ad es. in un modulo aggregatore che ha più requires di moduli con questa sintassi)
+
+
+```requires <nome_modulo>``` -> rende disponibile i package esportati dal modulo <nome_modulo> al modulo in cui si dichiara
+```requires transitive <nome_modulo>``` -> come il requires ma i moduli che richiedono il modulo in cui viene dichiarato automaticamente avranno disponibile anche i package di <nome_modulo>
+
+
+### Aggregator Modules
+An aggregator module collects and re-exports the content of other modules but adds no content of its own
+for example ```java.se``` contains all JDK -> contengono tutti ```requires transitive```...
+
+
+
+
+```import``` statements are allowed in module descriptor file -> To have ```import java.sql.*;``` in the module-info.java file, ```requires java.sql;``` directive is needed
+
+
+In the module descriptor file, if package specified in the exports directive is empty or doesn't exist, then compiler complains about it.
+
+module-info.java cannot be empty, it must at least specify the module name
+
+In the module descriptor file, if package specified in the exports directive is empty or doesn't exist, then compiler complains about it.
+
+unnamed package is not allowed in named modules
+
+### Comandi Compilazione & Moduli
+Formato comandi COMPILAZIONE
+```javac <options> <source files>```
+
+nel \<options>:
+* ```--module-source-path <module-source-path>```, ```-p <module-source-path>``` il path radice su cui trovare i diversi moduli (di solito src)
+* ```--module <module-name>```, ```-m <module-name>``` compila tutti i .java  del modulo specificato (Multiple module names are separated by "," )
+* ```-d <directory>``` specifica il nome della cartella dove mettere i file .class compilati
+* ```--module-path <path>```, ```-p <path>``` specifica i path di eventuali moduli richiesti (requires) al modulo da compilare che sono già stati compilati (A platform dependent path separator (```;``` on Windows and ```:``` on Linux/Mac) is used for multiple entries)
+
+When multiple modules with the same name are in different jar files on the module path, first module is selected and rest of the modules with same name are ignored
+
+Formato comandi ESECUZIONE sui moduli per eseguire una classe con un main in un modulo
+```java [options] -m <module>[/<mainclass>] [args...]```
+```java [options] --module <module>[/<mainclass>] [args...]```
+
+nelle [options] ```--module-path``` or ```-p``` rappresenta una lista di package contenenti moduli o path a moduli
+
+
+#### JAR
+Options of the ```jar``` command:
+
+* ```-c``` or ```--create```: Create the archive
+* ```-f``` or ```--file=FILE```: The archive file name
+* ```-e``` or ```--main-class=CLASSNAME```: The application entry point for stand-alone applications bundled into a modular, or executable, jar archive
+* ```-C DIR```: Change to the specified directory and include the following file
+
+```java --list-modules```  stampa la lista dei system moduls
+```java --list-module-resolution``` stampa l'output del module resolution
+
+
+## Optionals
+
+ciò che è dentro ```.orElse()``` viene eseguito sempre, sia che l'optional ci sia o meno, a differenza di ```.orElse(Consumer c)```
+
+
+## Overloading
+
+boxing is preferred over variable arguments
+this prints DARK:
+```java
+class Car {
+    void speed(Byte val) { //Line n1
+        System.out.println("DARK"); //Line n2
+    } //Line n3
+ 
+    void speed(byte... vals) {
+        System.out.println("LIGHT");
+    }
+}
+ 
+public class Test {
+    public static void main(String[] args) {
+        byte b = 10; //Line n4
+        new Car().speed(b); //Line n5
+    }
+}
+```
+overloading of methods with multi level inheritanche input: lowest in hierarchy take priority
+
+example:
+``` java
+Class A{
+...
+  method1(object)
+  method1(charsequence)
+  method1(string)
+
+}
+
+method1(null) // applica il method1(string)
+
+```
+
+### Overloading Exceptions
+```java
+interface Multiplier {
+    void multiply(int... x) throws SQLException;
+}
+ 
+class Calculator implements Multiplier {
+    public void multiply(int... x) throws /*INSERT*/ {
+    }
+}
+```
+at ```/*INSERT*/``` According to overriding rules, if super class / interface method declares to throw a checked exception, then overriding method of sub class / implementer class has following options:
+1. May not declare to throw any checked exception
+2. May declare to throw the same checked exception thrown by super class / interface method: SQLException is a valid option.
+3. May declare to throw the sub class of the exception thrown by super class / interface method: SQLWarning is a valid option.
+4. Cannot declare to throw the super class of the exception thrown by super class / interface method: Exception, Throwable are not valid options.
+5. Cannot declare to throw unrelated checked exception: java.io.IOException is not a valid option as it is not related java.sql.SQLException in multi-level inheritance.
+6. May declare to throw any RuntimeException or Error: RuntimeException, NullPointerException and Error are valid options.
+  
+
+## Stream
+```java
+int i = list.parallelStream().reduce(1, Integer::sum, (i1, i2) -> i1 * i2);
+```
+
+esegue il ```reduce``` su tutti gli elementi della lista in parallelo con ```Integer::sum``` e poi combina tutti i risultati con ```i1*i2```
+
+## Primitive Casting
+```java
+int value = (int) 3.14f; // 3 
+int score = (int) 3.99f; // 3
+```
 
 ## Other info
 
-attenzione alla conversione da char a int!! dato che sono compatibili
+attenzione alla conversione da ```char``` a ```int```!! dato che sono compatibili
 
-un metodo statico non può fare l'overrido di un metodo di classe anche se ha la stessa firma (errore di compilazione)
+un metodo statico non può fare l'override di un metodo di classe anche se ha la stessa firma (errore di compilazione)
 *****************************************************
 Compile time constant must be:
 
